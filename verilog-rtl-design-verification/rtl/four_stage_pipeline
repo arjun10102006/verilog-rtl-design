@@ -1,0 +1,59 @@
+`timescale 1ns / 1ps
+
+module four_stage_pipe(
+input [3:0]rs1,rs2,rd,func,
+input [7:0]addr,
+input clk1,clk2,
+output [3:0]zout
+    );
+    
+    reg [3:0]a_l2,b_l2,rd_l2,func_l2,z_l3,rd_l3,z_l4,z_out;
+    reg [7:0]addr_l2,addr_l3,addr_l4;
+    
+    
+    reg [15:0]regfile [15:0];
+    reg [15:0]mem [0:255];
+    assign zout = z_l4;
+    
+    always @(posedge clk1) begin
+    a_l2 <= regfile[rs1];
+    b_l2 <= regfile[rs2];
+    rd_l2 <= rd;
+    func_l2 <= func;
+    addr_l2 <= addr;
+    end
+    
+    always @(posedge clk2) begin 
+    case(func_l2)
+    0: z_l3 <= a_l2 + b_l2; 
+    1: z_l3 <= a_l2 - b_l2; 
+    2: z_l3 <= a_l2 * b_l2; 
+    3: z_l3 <= a_l2; 
+    4: z_l3 <=b_l2; 
+    5: z_l3 <= a_l2 & b_l2; 
+    6: z_l3 <= a_l2 | b_l2; 
+    7: z_l3 <= a_l2 ^ b_l2; 
+    8: z_l3 <= ~a_l2 ; 
+    9: z_l3 <=~b_l2; 
+    10: z_l3 <= a_l2>>1; 
+    11: z_l3 <= a_l2<<1; 
+    12: z_l3 <=b_l2>>1; 
+    13: z_l3 <=b_l2<<1; 
+    14: z_l3 <= a_l2 + 1; 
+    15: z_l3 <= a_l2 - 1; 
+    default:z_l3 <= 4'bxxxx; 
+    endcase
+    rd_l3 <=rd_l2;
+    addr_l3 <=addr_l2;
+    end
+    
+    always @(posedge clk1) begin
+    regfile[rd_l3] <=z_l3;
+    addr_l4 <= addr_l3;
+    z_l4 <= z_l3;
+    end
+    
+    always @(posedge clk2) begin
+    mem[addr_l4] <= z_l4;
+    end
+endmodule
